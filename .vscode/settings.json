@@ -1,0 +1,6 @@
+{
+    "files.autoSave": "afterDelay",
+    "editor.detectIndentation": false,
+    "workbench.tree.indent": 26,
+    "workbench.tree.expandMode": "doubleClick"
+}

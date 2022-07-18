@@ -1,0 +1,92 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""tokens """
+type AuthTokens {
+  accessToken: String!
+  refreshToken: String
+}
+
+type Card {
+  _id: ID
+  description: String!
+  term: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  addSet(newSetData: NewSetInput!): Set!
+  deleteSet(id: ID!): Set!
+  login(loginData: LoginInput!): AuthTokens!
+  signupConfirm(signupConfirmData: SignupConfirmInput!): String!
+  signupRequest(signupRequestData: SignupRequestInput!): String!
+  updateSet(updateSetData: UpdateSetInput!): Set!
+}
+
+input NewCardInput {
+  description: String!
+  term: String!
+}
+
+input NewSetInput {
+  cards: [NewCardInput!]!
+  description: String!
+  name: String!
+}
+
+type Query {
+  logout: String!
+  set(id: ID!): Set!
+  sets(skip: Int = 0, take: Int = 50): [Set!]!
+  user: User!
+}
+
+type Set {
+  _id: ID
+  author: User!
+  cards: [Card!]!
+  cardsAmount: Float!
+  created: String!
+  description: String!
+  name: String!
+}
+
+input SignupConfirmInput {
+  token: String!
+}
+
+input SignupRequestInput {
+  email: String!
+  name: String!
+  password: String!
+}
+
+input UpdateSetInput {
+  _id: String!
+  cards: [NewCardInput!]
+  description: String
+  name: String
+}
+
+type User {
+  _id: ID
+  created: DateTime!
+  email: String!
+  facebookId: String!
+  googleId: String!
+  name: String!
+  passwordHash: String!
+  signupConfirmTokenExpires: DateTime!
+  signupConfirmTokenValue: String!
+  status: String!
+}

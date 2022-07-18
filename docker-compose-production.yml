@@ -1,0 +1,60 @@
+version: "3.7"
+services:
+  api:
+    image: ${REGISTRY}/kartki-api:${IMAGE_TAG}
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      - mongodb
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_API_USER=${DB_API_USER}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - DB_API_PASSWORD=${DB_API_PASSWORD}
+      - MAILER_HOST=${MAILER_HOST}
+      - MAILER_PORT=${MAILER_PORT}
+      - MAILER_USERNAME=${MAILER_USERNAME}
+      - MAILER_PASSWORD=${MAILER_PASSWORD}
+      - MAILER_ENCRYPTION=${MAILER_ENCRYPTION}
+      - MAILER_FROM_EMAIL=${MAILER_FROM_EMAIL}
+      - FB_APP_ID=${FB_APP_ID}
+      - FB_APP_SECRET=${FB_APP_SECRET}
+      - GOOGLE_APP_ID=${GOOGLE_APP_ID}
+      - GOOGLE_APP_SECRET=${GOOGLE_APP_SECRET}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.api.rule=Host(`api.flashcard.pro`)
+      - traefik.http.routers.api.middlewares=secure-headers
+      - traefik.http.routers.api.entryPoints=https
+      - traefik.http.routers.api.tls=true
+      - traefik.http.routers.api.tls.certResolver=letsEncrypt
+
+  mongodb:
+    image: ${REGISTRY:-localhost}/kartki-api-db:${IMAGE_TAG}
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MONGO_DB=kartki
+      - MONGO_DB_USERNAME=${DB_API_USER}
+      - MONGO_DB_PASSWORD=${DB_API_PASSWORD}
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - default
+    volumes:
+      - mongodb-data:/data/db
+    restart: always
+
+volumes:
+  mongodb-data:
+    name: mongodb-data
+
+networks:
+  traefik-public:
+    external: true

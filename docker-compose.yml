@@ -1,0 +1,90 @@
+version: "3.7"
+services:
+  api:
+    image: ${REGISTRY:-localhost}/kartki-api-dev:cache
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+      target: development
+      cache_from:
+        - ${REGISTRY:-localhost}/kartki-api-dev:cache
+    volumes:
+      - .:/app
+    command: npm run start:debug
+    ports:
+      - "4001:3000"
+      - "9229:9229"
+    depends_on:
+      - mongodb
+    environment:
+      - FRONTEND_URL=${FRONTEND_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_ENV=development
+      - DB_API_USER=${DB_API_USER}
+      - DB_API_PASSWORD=${DB_API_PASSWORD}
+      - MAILER_HOST=${MAILER_HOST}
+      - MAILER_PORT=${MAILER_PORT}
+      - MAILER_USERNAME=${MAILER_USERNAME}
+      - MAILER_PASSWORD=${MAILER_PASSWORD}
+      - MAILER_ENCRYPTION=${MAILER_ENCRYPTION}
+      - MAILER_FROM_EMAIL=${MAILER_FROM_EMAIL}
+      - FB_APP_ID=${FB_APP_ID}
+      - FB_APP_SECRET=${FB_APP_SECRET}
+      - GOOGLE_APP_ID=${GOOGLE_APP_ID}
+      - GOOGLE_APP_SECRET=${GOOGLE_APP_SECRET}
+    networks:
+      - traefik-public
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.api.rule=Host(`kartki-api.localhost`)
+      - traefik.http.routers.api.entryPoints=http
+
+  mailer:
+      image: mailhog/mailhog
+      networks:
+          - traefik-public
+          - default
+      labels:
+          - traefik.enable=true
+          - traefik.docker.network=traefik-public
+          - traefik.http.routers.mailer.rule=Host(`kartki-mailer.localhost`)
+          - traefik.http.routers.mailer.entryPoints=http
+          - traefik.http.services.mailer.loadBalancer.server.port=8025
+
+  cli:
+    build:
+      context: docker/cli
+    volumes:
+      - .:/app
+
+  mongodb:
+    image: ${REGISTRY:-localhost}/kartki-api-db-dev:cache
+    build:
+      context: .
+      dockerfile: docker/mongo/Dockerfile
+      cache_from:
+        - ${REGISTRY:-localhost}/kartki-api-db-dev:cache
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MONGO_DB=kartki
+      - MONGO_DB_USERNAME=${DB_API_USER}
+      - MONGO_DB_PASSWORD=${DB_API_PASSWORD}
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+
+volumes:
+  mongodb-data:
+    name: mongodb-data
+
+networks:
+  traefik-public:
+    external: true
